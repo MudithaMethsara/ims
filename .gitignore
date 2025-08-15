@@ -1,0 +1,13 @@
+# NetBeans build outputs
+/build/
+/dist/
+
+# NetBeans project metadata
+/nbproject/private/
+/nbbuild/
+/nbdist/
+build.xml.orig
+
+# Other
+*.orig
+.nb-gradle/

@@ -177,7 +177,27 @@ public class LogIn extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btn_loginActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_loginActionPerformed
+        String username = input_username.getText();
+        String password = new String(input_password.getPassword());
+        String role = (String) jComboBox1.getSelectedItem();
 
+        lk.redwolfdynamic.ims.service.AuthenticationService authService = new lk.redwolfdynamic.ims.service.AuthenticationService();
+        lk.redwolfdynamic.ims.model.User user = authService.login(username, password, role);
+
+        if (user != null) {
+            // Successful login
+            if ("Admin".equals(role)) {
+                Admin_Dashboard adminDashboard = new Admin_Dashboard();
+                adminDashboard.setVisible(true);
+            } else if ("Reception".equals(role)) {
+                Receptions_Dashboard receptionDashboard = new Receptions_Dashboard();
+                receptionDashboard.setVisible(true);
+            }
+            this.dispose(); // Close the login window
+        } else {
+            // Failed login
+            javax.swing.JOptionPane.showMessageDialog(this, "Invalid username, password, or role.", "Login Failed", javax.swing.JOptionPane.ERROR_MESSAGE);
+        }
     }//GEN-LAST:event_btn_loginActionPerformed
 
     /**

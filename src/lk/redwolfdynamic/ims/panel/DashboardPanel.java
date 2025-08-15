@@ -10,11 +10,23 @@ package lk.redwolfdynamic.ims.panel;
  */
 public class DashboardPanel extends javax.swing.JPanel {
 
+    private lk.redwolfdynamic.ims.service.DashboardService dashboardService;
+
     /**
      * Creates new form DashboardPanel
      */
     public DashboardPanel() {
         initComponents();
+        this.dashboardService = new lk.redwolfdynamic.ims.service.DashboardService();
+        loadStats();
+    }
+
+    private void loadStats() {
+        lk.redwolfdynamic.ims.model.DashboardStats stats = dashboardService.getDashboardStats();
+        jLabel3.setText(String.valueOf(stats.getStudentCount()));
+        jLabel5.setText(String.valueOf(stats.getTeacherCount()));
+        jLabel7.setText(String.valueOf(stats.getCourseCount()));
+        // jLabel9 for payments due can be implemented later
     }
 
     /**
