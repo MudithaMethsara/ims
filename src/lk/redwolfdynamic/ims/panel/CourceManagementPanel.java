@@ -8,13 +8,51 @@ package lk.redwolfdynamic.ims.panel;
  *
  * @author RedWolf
  */
+import lk.redwolfdynamic.ims.model.CourseDetails;
+import lk.redwolfdynamic.ims.model.Department;
+import lk.redwolfdynamic.ims.service.CourseService;
+import lk.redwolfdynamic.ims.service.DepartmentService;
+import java.util.List;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JOptionPane;
+import javax.swing.table.DefaultTableModel;
+
 public class CourceManagementPanel extends javax.swing.JPanel {
+
+    private CourseService courseService;
+    private DepartmentService departmentService;
+    private List<Department> departments;
 
     /**
      * Creates new form SubjectManagementPanel
      */
     public CourceManagementPanel() {
         initComponents();
+        this.courseService = new CourseService();
+        this.departmentService = new DepartmentService();
+        loadDepartments();
+        loadCourses();
+    }
+
+    private void loadDepartments() {
+        departments = departmentService.getAllDepartments();
+        DefaultComboBoxModel<String> dcm = new DefaultComboBoxModel<>();
+        dcm.addElement("Select Department");
+        for (Department department : departments) {
+            dcm.addElement(department.getName());
+        }
+        jComboBox3.setModel(dcm);
+    }
+
+    private void loadCourses() {
+        List<CourseDetails> courses = courseService.getAllCourseDetails();
+        DefaultTableModel dtm = (DefaultTableModel) jTable1.getModel();
+        dtm.setRowCount(0);
+        dtm.setColumnIdentifiers(new Object[]{"ID", "Course Name", "Department"});
+
+        for (CourseDetails course : courses) {
+            dtm.addRow(new Object[]{course.getId(), course.getCourseName(), course.getDepartmentName()});
+        }
     }
 
     /**
@@ -272,7 +310,26 @@ public class CourceManagementPanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btn_loginActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_loginActionPerformed
+        String courseName = coseName.getText();
+        int selectedDeptIndex = jComboBox3.getSelectedIndex();
 
+        if (selectedDeptIndex <= 0) { // 0 is "Select Department"
+            JOptionPane.showMessageDialog(this, "Please select a department.", "Validation Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // Get the department ID from the stored list
+        Department selectedDepartment = departments.get(selectedDeptIndex - 1); // Adjust for "Select" item
+        int departmentId = selectedDepartment.getId();
+
+        if (courseService.addCourse(courseName, departmentId)) {
+            JOptionPane.showMessageDialog(this, "Course added successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
+            loadCourses(); // Refresh table
+            coseName.setText(""); // Clear text field
+            jComboBox3.setSelectedIndex(0);
+        } else {
+            JOptionPane.showMessageDialog(this, "Failed to add course. It may be a duplicate or invalid name.", "Error", JOptionPane.ERROR_MESSAGE);
+        }
     }//GEN-LAST:event_btn_loginActionPerformed
 
     private void btn_login1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_login1ActionPerformed

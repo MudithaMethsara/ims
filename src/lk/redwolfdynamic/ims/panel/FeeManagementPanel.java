@@ -8,13 +8,49 @@ package lk.redwolfdynamic.ims.panel;
  *
  * @author RedWolf
  */
+import lk.redwolfdynamic.ims.model.Course;
+import lk.redwolfdynamic.ims.model.PaymentDetails;
+import lk.redwolfdynamic.ims.service.CourseService;
+import lk.redwolfdynamic.ims.service.PaymentService;
+import java.util.List;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.table.DefaultTableModel;
+
 public class FeeManagementPanel extends javax.swing.JPanel {
+
+    private PaymentService paymentService;
+    private CourseService courseService;
+    private List<Course> courses;
 
     /**
      * Creates new form FeeManagementPanel
      */
     public FeeManagementPanel() {
         initComponents();
+        this.paymentService = new PaymentService();
+        this.courseService = new CourseService();
+        loadCourses();
+        loadPayments();
+    }
+
+    private void loadCourses() {
+        courses = courseService.getAllCourses();
+        DefaultComboBoxModel<String> dcm = new DefaultComboBoxModel<>();
+        dcm.addElement("Select Course");
+        for (Course course : courses) {
+            dcm.addElement(course.getName());
+        }
+        jComboBox3.setModel(dcm);
+    }
+
+    private void loadPayments() {
+        List<PaymentDetails> payments = paymentService.getAllPaymentDetails();
+        DefaultTableModel dtm = (DefaultTableModel) jTable1.getModel();
+        dtm.setRowCount(0);
+
+        for (PaymentDetails payment : payments) {
+            dtm.addRow(new Object[]{payment.getPaymentId(), payment.getStudentName(), payment.getAmount(), payment.getCourseName(), payment.getPaymentDate()});
+        }
     }
 
     /**
@@ -206,7 +242,35 @@ public class FeeManagementPanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btn_loginActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_loginActionPerformed
+        try {
+            int selectedCourseIndex = jComboBox3.getSelectedIndex();
+            if (selectedCourseIndex <= 0) {
+                javax.swing.JOptionPane.showMessageDialog(this, "Please select a course.", "Validation Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            int courseId = courses.get(selectedCourseIndex - 1).getId();
 
+            int studentId = Integer.parseInt(tf3.getText());
+            java.math.BigDecimal amount = new java.math.BigDecimal(tf2.getText());
+
+            lk.redwolfdynamic.ims.model.Payment payment = new lk.redwolfdynamic.ims.model.Payment();
+            payment.setStudentId(studentId);
+            payment.setCourseId(courseId);
+            payment.setAmount(amount);
+            payment.setPaymentDate(new java.util.Date());
+
+            if (paymentService.addPayment(payment)) {
+                javax.swing.JOptionPane.showMessageDialog(this, "Payment added successfully.", "Success", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+                loadPayments();
+                tf2.setText("");
+                tf3.setText("");
+                jComboBox3.setSelectedIndex(0);
+            } else {
+                javax.swing.JOptionPane.showMessageDialog(this, "Failed to add payment. Please check the details.", "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (NumberFormatException e) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Invalid student ID or amount. Please enter valid numbers.", "Input Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+        }
     }//GEN-LAST:event_btn_loginActionPerformed
 
     private void btn_login1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_login1ActionPerformed

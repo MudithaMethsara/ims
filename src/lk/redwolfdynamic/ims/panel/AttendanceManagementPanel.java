@@ -8,13 +8,38 @@ package lk.redwolfdynamic.ims.panel;
  *
  * @author RedWolf
  */
+import lk.redwolfdynamic.ims.model.Course;
+import lk.redwolfdynamic.ims.model.Student;
+import lk.redwolfdynamic.ims.service.CourseService;
+import lk.redwolfdynamic.ims.service.StudentService;
+import java.util.List;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.table.DefaultTableModel;
+
 public class AttendanceManagementPanel extends javax.swing.JPanel {
+
+    private CourseService courseService;
+    private StudentService studentService;
+    private List<Course> courses;
 
     /**
      * Creates new form AttendanceManagementPanel
      */
     public AttendanceManagementPanel() {
         initComponents();
+        this.courseService = new CourseService();
+        this.studentService = new StudentService();
+        loadCourses();
+    }
+
+    private void loadCourses() {
+        courses = courseService.getAllCourses();
+        DefaultComboBoxModel<String> dcm = new DefaultComboBoxModel<>();
+        dcm.addElement("Select Course");
+        for (Course course : courses) {
+            dcm.addElement(course.getName());
+        }
+        jComboBox5.setModel(dcm);
     }
 
     /**
@@ -268,11 +293,50 @@ public class AttendanceManagementPanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btn_loginActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_loginActionPerformed
+        DefaultTableModel dtm = (DefaultTableModel) jTable1.getModel();
+        int rowCount = dtm.getRowCount();
+        if (rowCount == 0) {
+            javax.swing.JOptionPane.showMessageDialog(this, "No students to save attendance for.", "Info", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
 
+        int successCount = 0;
+        for (int i = 0; i < rowCount; i++) {
+            int studentId = (Integer) dtm.getValueAt(i, 0);
+            String status = dtm.getValueAt(i, 2).toString();
+
+            lk.redwolfdynamic.ims.model.AttendanceStudent attendance = new lk.redwolfdynamic.ims.model.AttendanceStudent();
+            attendance.setStudentId(studentId);
+            attendance.setDate(new java.util.Date()); // Use current date
+            attendance.setStatus(status);
+
+            if (new lk.redwolfdynamic.ims.service.AttendanceService().addStudentAttendance(attendance)) {
+                successCount++;
+            }
+        }
+
+        javax.swing.JOptionPane.showMessageDialog(this, "Successfully saved attendance for " + successCount + " out of " + rowCount + " students.", "Success", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+        // Optionally, clear the table
+        dtm.setRowCount(0);
     }//GEN-LAST:event_btn_loginActionPerformed
 
     private void btn_login1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_login1ActionPerformed
-        // TODO add your handling code here:
+        int selectedCourseIndex = jComboBox5.getSelectedIndex();
+        if (selectedCourseIndex <= 0) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Please select a course to search.", "Validation Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        Course selectedCourse = courses.get(selectedCourseIndex - 1);
+        List<Student> students = studentService.getStudentsByCourseId(selectedCourse.getId());
+
+        DefaultTableModel dtm = (DefaultTableModel) jTable1.getModel();
+        dtm.setRowCount(0);
+        dtm.setColumnIdentifiers(new Object[]{"ID", "Name", "Status"});
+
+        for (Student student : students) {
+            dtm.addRow(new Object[]{student.getId(), student.getFirstName() + " " + student.getLastName(), "Present"}); // Default to Present
+        }
     }//GEN-LAST:event_btn_login1ActionPerformed
 
 

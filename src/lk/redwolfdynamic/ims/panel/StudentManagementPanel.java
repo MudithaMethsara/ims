@@ -10,7 +10,19 @@ import com.formdev.flatlaf.FlatClientProperties;
  *
  * @author RedWolf
  */
+import lk.redwolfdynamic.ims.model.Course;
+import lk.redwolfdynamic.ims.model.StudentDetails;
+import lk.redwolfdynamic.ims.service.CourseService;
+import lk.redwolfdynamic.ims.service.StudentService;
+import java.util.List;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.table.DefaultTableModel;
+
 public class StudentManagementPanel extends javax.swing.JPanel {
+
+    private StudentService studentService;
+    private CourseService courseService;
+    private List<Course> courses;
 
     /**
      * Creates new form StudentManagementPanel
@@ -18,6 +30,31 @@ public class StudentManagementPanel extends javax.swing.JPanel {
     public StudentManagementPanel() {
         initComponents();
         studentManagement_scrollPanel.putClientProperty(FlatClientProperties.STYLE, "arc:15");
+        this.studentService = new StudentService();
+        this.courseService = new CourseService();
+        loadCourses();
+        loadStudents();
+    }
+
+    private void loadCourses() {
+        courses = courseService.getAllCourses();
+        DefaultComboBoxModel<String> dcm = new DefaultComboBoxModel<>();
+        dcm.addElement("Select Course");
+        for (Course course : courses) {
+            dcm.addElement(course.getName());
+        }
+        jComboBox2.setModel(dcm);
+    }
+
+    private void loadStudents() {
+        List<StudentDetails> students = studentService.getAllStudentDetails();
+        DefaultTableModel dtm = (DefaultTableModel) jTable1.getModel();
+        dtm.setRowCount(0);
+        dtm.setColumnIdentifiers(new Object[]{"ID", "First Name", "Last Name", "Email", "Phone", "Course"});
+
+        for (StudentDetails student : students) {
+            dtm.addRow(new Object[]{student.getId(), student.getFirstName(), student.getLastName(), student.getEmail(), student.getPhone(), student.getCourseName()});
+        }
     }
 
     /**
@@ -293,8 +330,35 @@ public class StudentManagementPanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btn_loginActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_loginActionPerformed
+        lk.redwolfdynamic.ims.model.Student student = new lk.redwolfdynamic.ims.model.Student();
+        student.setFirstName(txtF_fname.getText());
+        student.setLastName(txtF_lname.getText());
+        student.setEmail(txt_email.getText());
+        student.setPhone(txtF_addressLineOne.getText());
 
+        int selectedCourseIndex = jComboBox2.getSelectedIndex();
+        if (selectedCourseIndex <= 0) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Please select a course.", "Validation Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        student.setCourseId(courses.get(selectedCourseIndex - 1).getId());
+
+        if (studentService.addStudent(student)) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Student added successfully.", "Success", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+            loadStudents();
+            clearFields();
+        } else {
+            javax.swing.JOptionPane.showMessageDialog(this, "Failed to add student. Please check the details.", "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+        }
     }//GEN-LAST:event_btn_loginActionPerformed
+
+    private void clearFields() {
+        txtF_fname.setText("");
+        txtF_lname.setText("");
+        txt_email.setText("");
+        txtF_addressLineOne.setText("");
+        jComboBox2.setSelectedIndex(0);
+    }
 
     private void btn_login1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_login1ActionPerformed
         // TODO add your handling code here:

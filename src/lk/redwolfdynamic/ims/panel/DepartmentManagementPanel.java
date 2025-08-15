@@ -8,13 +8,34 @@ package lk.redwolfdynamic.ims.panel;
  *
  * @author RedWolf
  */
+import lk.redwolfdynamic.ims.model.Department;
+import lk.redwolfdynamic.ims.service.DepartmentService;
+import java.util.List;
+import javax.swing.JOptionPane;
+import javax.swing.table.DefaultTableModel;
+
 public class DepartmentManagementPanel extends javax.swing.JPanel {
+
+    private DepartmentService departmentService;
 
     /**
      * Creates new form DepartmentManagement
      */
     public DepartmentManagementPanel() {
         initComponents();
+        this.departmentService = new DepartmentService();
+        loadDepartments();
+    }
+
+    private void loadDepartments() {
+        List<Department> departments = departmentService.getAllDepartments();
+        DefaultTableModel dtm = (DefaultTableModel) jTable1.getModel();
+        dtm.setRowCount(0);
+        dtm.setColumnIdentifiers(new Object[]{"ID", "Name"}); // Set correct column headers
+
+        for (Department department : departments) {
+            dtm.addRow(new Object[]{department.getId(), department.getName()});
+        }
     }
 
     /**
@@ -179,7 +200,14 @@ public class DepartmentManagementPanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btn_loginActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_loginActionPerformed
-
+        String departmentName = tf3.getText();
+        if (departmentService.addDepartment(departmentName)) {
+            JOptionPane.showMessageDialog(this, "Department added successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
+            loadDepartments(); // Refresh table
+            tf3.setText(""); // Clear text field
+        } else {
+            JOptionPane.showMessageDialog(this, "Failed to add department. It may be a duplicate or invalid name.", "Error", JOptionPane.ERROR_MESSAGE);
+        }
     }//GEN-LAST:event_btn_loginActionPerformed
 
     private void btn_login1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_login1ActionPerformed

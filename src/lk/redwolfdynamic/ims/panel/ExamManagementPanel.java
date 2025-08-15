@@ -8,13 +8,66 @@ package lk.redwolfdynamic.ims.panel;
  *
  * @author RedWolf
  */
+import lk.redwolfdynamic.ims.model.Course;
+import lk.redwolfdynamic.ims.model.ScheduledExamDetails;
+import lk.redwolfdynamic.ims.service.CourseService;
+import lk.redwolfdynamic.ims.service.ExamService;
+import java.util.List;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.table.DefaultTableModel;
+
 public class ExamManagementPanel extends javax.swing.JPanel {
+
+    private ExamService examService;
+    private CourseService courseService;
+    private List<Course> courses;
 
     /**
      * Creates new form ExamManagementPanel
      */
     public ExamManagementPanel() {
         initComponents();
+        this.examService = new ExamService();
+        this.courseService = new CourseService();
+        loadCourses();
+        loadScheduledExams();
+
+        jTable1.getSelectionModel().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting() && jTable1.getSelectedRow() != -1) {
+                int selectedRow = jTable1.getSelectedRow();
+                tf6.setText(jTable1.getValueAt(selectedRow, 1).toString()); // Name
+                jDateChooser1.setDate((java.util.Date) jTable1.getValueAt(selectedRow, 3));
+                tf5.setText(jTable1.getValueAt(selectedRow, 4).toString()); // Time
+
+                String courseName = jTable1.getValueAt(selectedRow, 2).toString();
+                for (int i = 0; i < jComboBox1.getItemCount(); i++) {
+                    if (jComboBox1.getItemAt(i).equals(courseName)) {
+                        jComboBox1.setSelectedIndex(i);
+                        break;
+                    }
+                }
+            }
+        });
+    }
+
+    private void loadCourses() {
+        courses = courseService.getAllCourses();
+        DefaultComboBoxModel<String> dcm = new DefaultComboBoxModel<>();
+        dcm.addElement("Select Course");
+        for (Course course : courses) {
+            dcm.addElement(course.getName());
+        }
+        jComboBox1.setModel(dcm);
+    }
+
+    private void loadScheduledExams() {
+        List<ScheduledExamDetails> exams = examService.getAllScheduledExamDetails();
+        DefaultTableModel dtm = (DefaultTableModel) jTable1.getModel();
+        dtm.setRowCount(0);
+
+        for (ScheduledExamDetails exam : exams) {
+            dtm.addRow(new Object[]{exam.getId(), exam.getExamName(), exam.getCourseName(), exam.getDate(), exam.getTime()});
+        }
     }
 
     /**
@@ -257,11 +310,66 @@ public class ExamManagementPanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btn_login2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_login2ActionPerformed
+        try {
+            String examName = tf6.getText();
+            java.util.Date examDate = jDateChooser1.getDate();
+            String examTime = tf5.getText();
 
+            int selectedCourseIndex = jComboBox1.getSelectedIndex();
+            if (selectedCourseIndex <= 0) {
+                javax.swing.JOptionPane.showMessageDialog(this, "Please select a course.", "Validation Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            int courseId = courses.get(selectedCourseIndex - 1).getId();
+
+            lk.redwolfdynamic.ims.model.Exam exam = new lk.redwolfdynamic.ims.model.Exam();
+            exam.setName(examName);
+            exam.setCourseId(courseId);
+            exam.setDate(examDate);
+            exam.setTime(examTime);
+
+            if (examService.addScheduledExam(exam)) {
+                javax.swing.JOptionPane.showMessageDialog(this, "Exam scheduled successfully.", "Success", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+                loadScheduledExams();
+                // clearFields(); // Helper method to clear fields would be good here
+            } else {
+                javax.swing.JOptionPane.showMessageDialog(this, "Failed to schedule exam. Please check the details.", "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (Exception e) {
+            javax.swing.JOptionPane.showMessageDialog(this, "An error occurred: " + e.getMessage(), "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+        }
     }//GEN-LAST:event_btn_login2ActionPerformed
 
     private void btn_login3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_login3ActionPerformed
-        // TODO add your handling code here:
+        int selectedRow = jTable1.getSelectedRow();
+        if (selectedRow == -1) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Please select an exam to update.", "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        try {
+            lk.redwolfdynamic.ims.model.Exam exam = new lk.redwolfdynamic.ims.model.Exam();
+            exam.setId((Integer) jTable1.getValueAt(selectedRow, 0));
+            exam.setName(tf6.getText());
+            exam.setDate(jDateChooser1.getDate());
+            exam.setTime(tf5.getText());
+
+            int selectedCourseIndex = jComboBox1.getSelectedIndex();
+            if (selectedCourseIndex <= 0) {
+                javax.swing.JOptionPane.showMessageDialog(this, "Please select a course.", "Validation Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            exam.setCourseId(courses.get(selectedCourseIndex - 1).getId());
+
+            if (examService.updateScheduledExam(exam)) {
+                javax.swing.JOptionPane.showMessageDialog(this, "Exam updated successfully.", "Success", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+                loadScheduledExams();
+            } else {
+                javax.swing.JOptionPane.showMessageDialog(this, "Failed to update exam.", "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (Exception e) {
+            javax.swing.JOptionPane.showMessageDialog(this, "An error occurred: " + e.getMessage(), "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+        }
     }//GEN-LAST:event_btn_login3ActionPerformed
 
     private void btn_login4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_login4ActionPerformed

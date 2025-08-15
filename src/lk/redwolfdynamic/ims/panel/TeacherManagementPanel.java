@@ -8,13 +8,68 @@ package lk.redwolfdynamic.ims.panel;
  *
  * @author RedWolf
  */
+import lk.redwolfdynamic.ims.model.Department;
+import lk.redwolfdynamic.ims.model.TeacherDetails;
+import lk.redwolfdynamic.ims.service.DepartmentService;
+import lk.redwolfdynamic.ims.service.TeacherService;
+import java.util.List;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.table.DefaultTableModel;
+
 public class TeacherManagementPanel extends javax.swing.JPanel {
+
+    private TeacherService teacherService;
+    private DepartmentService departmentService;
+    private List<Department> departments;
 
     /**
      * Creates new form TeacherManagementPanel
      */
     public TeacherManagementPanel() {
         initComponents();
+        this.teacherService = new TeacherService();
+        this.departmentService = new DepartmentService();
+        loadDepartments();
+        loadTeachers();
+
+        jTable1.getSelectionModel().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting() && jTable1.getSelectedRow() != -1) {
+                int selectedRow = jTable1.getSelectedRow();
+                txtF_fname.setText(jTable1.getValueAt(selectedRow, 1).toString());
+                txtF_lname.setText(jTable1.getValueAt(selectedRow, 2).toString());
+                txt_email.setText(jTable1.getValueAt(selectedRow, 3).toString());
+                txtF_addressLineOne.setText(jTable1.getValueAt(selectedRow, 4).toString());
+
+                String departmentName = jTable1.getValueAt(selectedRow, 5).toString();
+                for (int i = 0; i < jComboBox3.getItemCount(); i++) {
+                    if (jComboBox3.getItemAt(i).equals(departmentName)) {
+                        jComboBox3.setSelectedIndex(i);
+                        break;
+                    }
+                }
+            }
+        });
+    }
+
+    private void loadDepartments() {
+        departments = departmentService.getAllDepartments();
+        DefaultComboBoxModel<String> dcm = new DefaultComboBoxModel<>();
+        dcm.addElement("Select Department");
+        for (Department department : departments) {
+            dcm.addElement(department.getName());
+        }
+        jComboBox3.setModel(dcm);
+    }
+
+    private void loadTeachers() {
+        List<TeacherDetails> teachers = teacherService.getAllTeacherDetails();
+        DefaultTableModel dtm = (DefaultTableModel) jTable1.getModel();
+        dtm.setRowCount(0);
+        dtm.setColumnIdentifiers(new Object[]{"ID", "First Name", "Last Name", "Email", "Phone", "Department"});
+
+        for (TeacherDetails teacher : teachers) {
+            dtm.addRow(new Object[]{teacher.getId(), teacher.getFirstName(), teacher.getLastName(), teacher.getEmail(), teacher.getPhone(), teacher.getDepartmentName()});
+        }
     }
 
     /**
@@ -356,19 +411,90 @@ public class TeacherManagementPanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btn_loginActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_loginActionPerformed
+        lk.redwolfdynamic.ims.model.Teacher teacher = new lk.redwolfdynamic.ims.model.Teacher();
+        teacher.setFirstName(txtF_fname.getText());
+        teacher.setLastName(txtF_lname.getText());
+        teacher.setEmail(txt_email.getText());
+        teacher.setPhone(txtF_addressLineOne.getText());
 
+        int selectedDeptIndex = jComboBox3.getSelectedIndex();
+        if (selectedDeptIndex <= 0) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Please select a department.", "Validation Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        teacher.setDepartmentId(departments.get(selectedDeptIndex - 1).getId());
+
+        if (teacherService.addTeacher(teacher)) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Teacher added successfully.", "Success", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+            loadTeachers();
+            clearFields();
+        } else {
+            javax.swing.JOptionPane.showMessageDialog(this, "Failed to add teacher. Please check the details.", "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+        }
     }//GEN-LAST:event_btn_loginActionPerformed
+
+    private void clearFields() {
+        txtF_fname.setText("");
+        txtF_lname.setText("");
+        txt_email.setText("");
+        txtF_addressLineOne.setText("");
+        jComboBox3.setSelectedIndex(0);
+        jTable1.clearSelection();
+    }
 
     private void btn_login1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_login1ActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_btn_login1ActionPerformed
 
     private void btn_login2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_login2ActionPerformed
-        // TODO add your handling code here:
+        int selectedRow = jTable1.getSelectedRow();
+        if (selectedRow == -1) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Please select a teacher to update.", "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        lk.redwolfdynamic.ims.model.Teacher teacher = new lk.redwolfdynamic.ims.model.Teacher();
+        teacher.setId((Integer) jTable1.getValueAt(selectedRow, 0));
+        teacher.setFirstName(txtF_fname.getText());
+        teacher.setLastName(txtF_lname.getText());
+        teacher.setEmail(txt_email.getText());
+        teacher.setPhone(txtF_addressLineOne.getText());
+
+        int selectedDeptIndex = jComboBox3.getSelectedIndex();
+        if (selectedDeptIndex <= 0) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Please select a department.", "Validation Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        teacher.setDepartmentId(departments.get(selectedDeptIndex - 1).getId());
+
+        if (teacherService.updateTeacher(teacher)) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Teacher updated successfully.", "Success", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+            loadTeachers();
+            clearFields();
+        } else {
+            javax.swing.JOptionPane.showMessageDialog(this, "Failed to update teacher.", "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+        }
     }//GEN-LAST:event_btn_login2ActionPerformed
 
     private void btn_login3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_login3ActionPerformed
-        // TODO add your handling code here:
+        int selectedRow = jTable1.getSelectedRow();
+        if (selectedRow == -1) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Please select a teacher to delete.", "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        int teacherId = (Integer) jTable1.getValueAt(selectedRow, 0);
+        int confirm = javax.swing.JOptionPane.showConfirmDialog(this, "Are you sure you want to delete this teacher?", "Confirm Deletion", javax.swing.JOptionPane.YES_NO_OPTION);
+
+        if (confirm == javax.swing.JOptionPane.YES_OPTION) {
+            if (teacherService.deleteTeacher(teacherId)) {
+                javax.swing.JOptionPane.showMessageDialog(this, "Teacher deleted successfully.", "Success", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+                loadTeachers();
+                clearFields();
+            } else {
+                javax.swing.JOptionPane.showMessageDialog(this, "Failed to delete teacher.", "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+            }
+        }
     }//GEN-LAST:event_btn_login3ActionPerformed
 
 
